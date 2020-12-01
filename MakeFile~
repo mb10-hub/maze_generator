@@ -1,0 +1,23 @@
+x: main.o Maze.o MinHeap.o Union.o Cell.o
+	g++ -std=c++17 main.o Maze.o MinHeap.o Union.o Cell.o -o x
+
+main.o: main.cpp Maze.hpp
+	g++ -std=c++17 main.cpp -c -o main.o
+
+Maze.o: Maze.cpp Maze.hpp
+	g++ -std=c++17 Maze.cpp -c -o Maze.o
+
+MinHeap.o: MinHeap.cpp MinHeap.hpp
+	g++ -std=c++17 MinHeap.cpp -c -o MinHeap.o
+
+Union.o: Union.cpp Union.hpp
+	g++ -std=c++17 Union.cpp -c -o Union.o
+
+Cell.o: Cell.cpp Cell.hpp
+	g++ -std=c++17 Cell.o -c -o Cell.o
+
+dubug:
+	g++ -g -std=c++17 *.cpp -o x
+
+clean:
+	rm -rf *.o x
