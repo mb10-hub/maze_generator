@@ -22,6 +22,42 @@ void Cell::printCell(Cell *cell, int colMax)
         cout << "|";
 }
 
+void Cell::setCellPath(Cell *cell, vector<vector<Cell *>> MatrixCopy)
+{
+    for (int i = 0; i < cell->neighbors.size(); i++)
+    {
+        int x_cell = cell->x, y_cell = cell->y;
+        int x_neighbor = cell->neighbors[i]->x, y_neighbor = cell->neighbors[i]->y;
+
+        if (x_cell > x_neighbor && y_cell == y_neighbor)
+        {
+            // top neighbor;
+            // dont need to worry about the bottom
+
+            if (!MatrixCopy[x_neighbor][y_neighbor]->floor && cell->neighbors[i]->path)
+                cell->neighbors[i]->floor = false;
+        }
+        else if (x_cell < x_neighbor && y_cell == y_neighbor)
+        {
+            // bottom neighbor;
+            if (!MatrixCopy[x_cell][y_cell]->floor && cell->neighbors[i]->path)
+                cell->floor = false;
+        }
+        else if (x_cell == x_neighbor && y_cell < y_neighbor)
+        {
+            //right neighbor
+            if (!MatrixCopy[x_neighbor][y_neighbor]->wall && cell->neighbors[i]->path)
+                cell->neighbors[i]->wall = false;
+        }
+        else if (x_cell == x_neighbor && y_cell > y_neighbor)
+        {
+            //left neighbor
+            if (!MatrixCopy[x_cell][y_cell]->wall && cell->neighbors[i]->path)
+                cell->wall = false;
+        }
+    }
+}
+
 MinHeap::MinHeap()
 {
     Cell cell;

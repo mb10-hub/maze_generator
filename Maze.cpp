@@ -9,6 +9,8 @@ Maze::Maze(int x, int y)
 
     createCellMatrix();
     generateMaze();
+    cout << endl;
+    cout << "____________________________________________________________________" << endl;
     setNeighbors();
     setWeights();
     // Prims
@@ -16,15 +18,41 @@ Maze::Maze(int x, int y)
     solvedMaze(path_p);
     cout << "\nPrim's Algorithm: " << endl;
     generateMaze();
+    vector<vector<Cell *>> cellMatrixCopy = getMaze();
 
+    cout << endl;
+    // solve Prim's maze;
+    vector<Cell *> solved_path_p;
+    resetVisited();
+    Solve solve;
+    solved_path_p = solve.dfsPathFromTo(cellMatrix[0][0], cellMatrix[m - 1][n - 1], cellMatrix);
+    cout << endl;
+    //print Prim's solved
+    cout << "Prims's Solved Maze" << endl;
+    resetMaze();
+    setPath(solved_path_p, cellMatrixCopy);
+    generateSolvedMaze();
+
+    //Kruskals
     resetMaze();
     cout << endl;
-    //Kruskals
-    generateMaze();
+    cout << "____________________________________________________________________" << endl;
     vector<Cell::Edge> path_k = Kruskals();
     solvedMaze(path_k);
     cout << "\nKruskal's Algorithm: " << endl;
     generateMaze();
+    cellMatrixCopy = getMaze();
+
+    // solve kruskal's maze
+    vector<Cell *> solved_path_k;
+    resetVisited();
+    solved_path_k = solve.dfsPathFromTo(cellMatrix[0][0], cellMatrix[m - 1][n - 1], cellMatrix);
+    cout << endl;
+    //print Kruskal's solved
+    cout << "Kruskal's Solved Maze" << endl;
+    resetMaze();
+    setPath(solved_path_k, cellMatrixCopy);
+    generateSolvedMaze();
 }
 
 Maze::~Maze()
@@ -85,6 +113,42 @@ void Maze::generateMaze()
         cout << endl;
     }
     cout << " ";
+}
+
+void Maze::generateSolvedMaze()
+{
+    Cell cell;
+    // draw the top border
+    // .. the rest gets taken car of with |  & _
+    for (int i = 0; i < cellMatrix[0].size(); i++)
+    {
+        cout << " _";
+    }
+    cout << endl;
+    for (int i = 0; i < cellMatrix.size(); i++)
+    {
+        for (int j = 0; j < cellMatrix[i].size(); j++)
+        {
+            cell.printCell(cellMatrix[i][j], n);
+        }
+        cout << endl;
+    }
+    cout << " ";
+}
+
+void Maze::setPath(vector<Cell *> path, vector<vector<Cell *>> MatrixCopy)
+{
+    Cell cell;
+
+    for (int i = 0; i < path.size(); i++)
+    {
+        path[i]->path = true;
+    }
+
+    for (int i = 0; i < path.size(); i++)
+    {
+        cell.setCellPath(path[i], MatrixCopy);
+    }
 }
 
 void Maze::solvedMaze(vector<Cell::Edge> path)
@@ -268,6 +332,18 @@ void Maze::resetMaze()
             cellMatrix[i][j]->floor = true;
             cellMatrix[i][j]->wall = true;
             cellMatrix[i][j]->visited = false;
+            cellMatrix[i][j]->path = false;
+        }
+    }
+}
+
+void Maze::resetVisited()
+{
+    for (int i = 0; i < cellMatrix.size(); i++)
+    {
+        for (int j = 0; j < cellMatrix[i].size(); j++)
+        {
+            cellMatrix[i][j]->visited = false;
         }
     }
 }
@@ -316,4 +392,172 @@ vector<Cell::Edge> Maze::Kruskals()
     }
 
     return path;
+}
+
+vector<vector<Cell *>> Maze::getMaze()
+{
+    vector<vector<Cell *>> MatrixCopy;
+
+    for (int i = 0; i < m; i++)
+    {
+        MatrixCopy.push_back(vector<Cell *>());
+        // representatives.push_back(vector<Cell::Reps *>());
+
+        for (int j = 0; j < n; j++)
+        {
+            Cell *cell = new Cell(i, j);
+            if (!cellMatrix[i][j]->floor)
+                cell->floor = false;
+            if (!cellMatrix[i][j]->wall)
+                cell->wall = false;
+            MatrixCopy[i].push_back(cell);
+        }
+    }
+    return MatrixCopy;
+}
+
+// functions for sovle class
+
+Solve::Solve() {}
+
+vector<Cell *> Solve::dfsPathFromTo(Cell *Start, Cell *Target, vector<vector<Cell *>> &cellMatrix)
+{
+    //****call resetVisited() before calling this funct and the start and target
+    // Initializations
+    // queue<Node *> q_nodes; //** Might not need for making tree
+    vector<Cell *> path;
+    deque<Node *> q_nodes;
+    int front = -1111;
+    Node *curr = nullptr;
+    // Initializations/
+
+    //create root (startWord, no Parent)
+    Node *root = newNode(Start, nullptr);
+    // get the loc of the start;
+    int x, y, temp;
+
+    q_nodes.push_front(root); // push root to the queue *** might not need for making tree
+    path.push_back(Start);
+
+    while (!q_nodes.empty())
+    {
+
+        curr = q_nodes.back();
+        // front = curr->index;
+        x = curr->cell->x, y = curr->cell->y;
+        // visited[root->index] = true;
+        cellMatrix[x][y]->visited = true;
+
+        // if (curr->child.size() > 0)
+        // {
+        //     children_true(curr);
+        // }
+        int i = 0;
+
+        //iter through the neighbors of
+        while (i < cellMatrix[x][y]->neighbors.size())
+        {
+
+            if (!cellMatrix[x][y]->neighbors[i]->visited &&
+                makesPath(cellMatrix[x][y], cellMatrix[x][y]->neighbors[i]))
+            {
+                // inQ_visited(q_nodes, visited);??
+                cellMatrix[x][y]->neighbors[i]->visited = true;
+                //add the all the children for curr
+                curr->child.push_back(newNode(cellMatrix[x][y]->neighbors[i], curr));
+                //add the children to Q of Nodes to look for grandchildren
+                q_nodes.push_back(curr->child[curr->child.size() - 1]);
+                path.push_back(cellMatrix[x][y]->neighbors[i]);
+                if (cellMatrix[x][y]->neighbors[i] == Target)
+                {
+                    return path;
+                }
+
+                temp = x;
+                x = cellMatrix[x][y]->neighbors[i]->x, y = cellMatrix[temp][y]->neighbors[i]->y;
+                i = 0;
+                curr = curr->child[curr->child.size() - 1];
+            }
+            else
+            {
+                i++;
+                if (i == cellMatrix[x][y]->neighbors.size()) // maybe move above prev else// check debugger
+                {
+                    // backtrack the dead end cell
+                    path.pop_back();
+                }
+            }
+
+            // resetVisited();
+            // children_true(curr, visited);
+            // inQ_visited(q_nodes, visited);
+        }
+        i = 0;
+        // resetVisited();
+        // inQ_visited(q_nodes, visited);
+        q_nodes.pop_back();
+    }
+    return path;
+}
+
+bool Solve::makesPath(Cell *cell, Cell *neighbor)
+{
+    int x_cell = cell->x, y_cell = cell->y;
+    int x_neighbor = neighbor->x, y_neighbor = neighbor->y;
+
+    if (x_cell > x_neighbor && y_cell == y_neighbor)
+    {
+        // top neighbor;
+        if (!neighbor->floor)
+        {
+            return true;
+        }
+
+        return false;
+    }
+    else if (x_cell < x_neighbor && y_cell == y_neighbor)
+    {
+        // bottom neighbor;
+        if (!cell->floor)
+        {
+            return true;
+        }
+        return false;
+    }
+    else if (x_cell == x_neighbor && y_cell < y_neighbor)
+    {
+        //right neighbor
+        if (!neighbor->wall)
+        {
+            return true;
+        }
+        return false;
+    }
+    else if (x_cell == x_neighbor && y_cell > y_neighbor)
+    {
+        //left neighbor
+        if (!cell->wall)
+        {
+            return true;
+        }
+        return false;
+    }
+    return false;
+}
+
+Node *Solve::newNode(Cell *cell, Node *parent_index)
+{
+    Node *temp = new Node;
+    temp->cell = cell;
+    temp->parent = parent_index;
+    return temp;
+}
+
+void Solve::children_true(Node *curr)
+{
+
+    for (int i = 0; i < curr->child.size(); i++)
+    {
+        curr->child[i]->cell->visited = true;
+    }
 }

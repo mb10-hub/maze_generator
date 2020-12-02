@@ -22,12 +22,14 @@ public:
     Cell();
     Cell(int a, int b);
     void printCell(Cell *, int);
+    void setCellPath(Cell *, vector<vector<Cell *>>);
 
     //variables
     int x, y;
     bool visited = false;
     bool wall = true;
     bool floor = true;
+    bool path = false;
     //vecotors of neighbors and edges
     vector<Cell *> neighbors;
     vector<Edge> edges;
